@@ -1,0 +1,15 @@
+config BR2_PACKAGE_PYTHON_PIBOOTH
+	bool "python-pibooth"
+	select BR2_PACKAGE_LIBGPHOTO2
+	select BR2_PACKAGE_SDL2
+	select BR2_PACKAGE_CUPS
+	select BR2_PACKAGE_PYTHON_PILLOW
+	select BR2_PACKAGE_PYTHON_PLUGGY
+	select BR2_PACKAGE_PYTHON_PSUTIL
+	select BR2_PACKAGE_PYTHON_PYGAME_VKEYBOARD
+	select BR2_PACKAGE_PYTHON_PYGAME_MENU
+	help
+	  A Python framework for building reactive web-apps.
+	  Developed by Plotly.
+
+	  https://plotly.com/dash

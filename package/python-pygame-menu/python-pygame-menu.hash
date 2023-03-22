@@ -1,0 +1,5 @@
+# md5, sha256 from https://pypi.org/pypi/pygame-menu/json
+md5  c144142a300a3eecfbf3445877a82543  pygame-menu-4.3.9.tar.gz
+sha256  976b71ee30d9d69be0a5d20c2d8750493a5dff23cc0889f81db180255a660fb4  pygame-menu-4.3.9.tar.gz
+# Locally computed sha256 checksums
+sha256  337ea9991141b354bd542009a3c4dadb9c194de339b50baea8e775cd8cf2eb64  LICENSE

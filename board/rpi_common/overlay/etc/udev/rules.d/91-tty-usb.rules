@@ -1,0 +1,1 @@
+SUBSYSTEM=="tty", ENV{ID_BUS}=="usb", GROUP="dialout", TAG+="uaccess"

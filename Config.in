@@ -1,0 +1,40 @@
+menu "packages"
+  source "$BR2_EXTERNAL_PIBOOTHOS_PATH/package/python-pibooth/Config.in"
+  source "$BR2_EXTERNAL_PIBOOTHOS_PATH/package/python-pygame-menu/Config.in"
+  source "$BR2_EXTERNAL_PIBOOTHOS_PATH/package/python-pygame-vkeyboard/Config.in"
+  source "$BR2_EXTERNAL_PIBOOTHOS_PATH/package/python-pyperclip/Config.in"
+endmenu
+
+menu "configuration"
+
+config BR2_WIFI_SETTINGS
+	bool "configure wifi"
+	help
+	  Specify Wifi settings
+
+config BR2_WIFI_SETTINGS_SSID
+	string "SSID"
+	depends on BR2_WIFI_SETTINGS
+	help
+	  The ssid of the Wifi connection
+
+config BR2_WIFI_SETTINGS_PASSWORD
+	string "Password"
+	depends on BR2_WIFI_SETTINGS
+	help
+	  The password of the wifi connection
+
+config BR2_SECURE_SSH
+	bool "secure the SSH connection"
+	help
+	  Secure the SSH connection with private/public key
+
+config BR2_SECURE_SSH_PUBKEY_PATH
+	string "public key path"
+	depends on BR2_SECURE_SSH
+	help
+	  Specify the path to the public key that needs
+	  to be added to the ~/.ssh/authorized_keys file
+	  of the root and jenkins user.
+
+endmenu

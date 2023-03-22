@@ -1,0 +1,37 @@
+#!/bin/sh
+
+set -e
+
+RAUC_DIR="/run/rauc"
+
+# only run hook for boot partition
+test "$RAUC_SLOT_CLASS" = "boot" || exit 0
+
+case "$1" in
+    slot-install)
+        if [ -f ${RAUC_SLOT_MOUNT_POINT}/wpa_supplicant.conf ]; then
+            echo "Backing up wpa_supplicant.conf..."
+            cp -f ${RAUC_SLOT_MOUNT_POINT}/wpa_supplicant.conf ${RAUC_DIR}/wpa_supplicant.conf_backup
+        fi
+
+        echo "remount ${RAUC_SLOT_MOUNT_POINT} read-write..."
+        mount -o remount,rw ${RAUC_SLOT_MOUNT_POINT}
+
+        echo "Extracting ${RAUC_IMAGE_NAME} to ${RAUC_SLOT_MOUNT_POINT}..."
+        tar xf ${RAUC_IMAGE_NAME} -C ${RAUC_SLOT_MOUNT_POINT} --numeric-owner
+
+        if [ -f ${RAUC_DIR}/wpa_supplicant.conf_backup ]; then
+            echo "Restoring wpa_supplicant.conf..."
+            mv -f ${RAUC_DIR}/wpa_supplicant.conf_backup ${RAUC_SLOT_MOUNT_POINT}/wpa_supplicant.conf
+        fi
+
+        echo "remount ${RAUC_SLOT_MOUNT_POINT} read-only..."
+        mount -o remount,ro ${RAUC_SLOT_MOUNT_POINT}
+    ;;
+    *)
+        echo "unsupported hook action: $1" 1>&2
+        exit 10
+    ;;
+esac
+
+exit 0

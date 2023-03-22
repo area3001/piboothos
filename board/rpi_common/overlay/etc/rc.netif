@@ -1,0 +1,171 @@
+#!/bin/sh
+
+# fix udev stripping sbin from path
+PATH=/usr/sbin:/sbin:/usr/bin:/bin
+
+SERIAL="$(grep Serial /proc/cpuinfo | sed 's/Serial\s*: 1000\(\w*\)/\1/')"
+
+# Setup dnsmasq on an interface
+function setup_dnsmasq {
+  INTERFACE=$1
+  NETWORK=$2
+
+  (
+    echo "interface=${INTERFACE}"
+    echo "bind-interfaces"
+    echo "except-interface=lo"
+    echo "address=/#/${NETWORK}.1"
+    echo "dhcp-range=${INTERFACE},${NETWORK}.100,${NETWORK}.250,12h"
+    echo "dhcp-option=3"
+    echo "dhcp-option=6"
+  ) > /run/dnsmasq-${INTERFACE}.conf
+
+  ip addr add ${NETWORK}.1/24 dev ${INTERFACE}
+  dnsmasq -C /run/dnsmasq-${INTERFACE}.conf --pid-file=/run/dnsmasq-${INTERFACE}.pid
+}
+
+function setup_hostapd {
+  INTERFACE=$1
+  SSID=$2
+  PASSWD=$3
+
+  (
+    echo "interface=${INTERFACE}"
+    echo "ssid=${SSID}"
+    echo "wpa_passphrase=${PASSWD}"
+    echo "driver=nl80211"
+    echo "channel=1"
+    echo "hw_mode=g"
+    echo "wpa=2"
+    echo "wpa_key_mgmt=WPA-PSK"
+    echo "wpa_pairwise=CCMP TKIP"
+    echo "rsn_pairwise=CCMP"
+  ) > /run/hostapd-${INTERFACE}.conf
+
+  if [ -z "${PASSWD}" ]; then
+    sed -i /run/hostapd-${INTERFACE}.conf -e "s/^wpa=/#wpa=/g"
+    sed -i /run/hostapd-${INTERFACE}.conf -e "s/^wpa_passphrase=/#wpa_passphrase=/g"
+  fi
+
+  hostapd -B /run/hostapd-${INTERFACE}.conf
+}
+
+function start_ssh {
+  INTERFACE=$1
+  IP="$2.1"
+  printf "Starting dropbear sshd on ${INTERFACE}: "
+  start-stop-daemon -S -q -p /run/dropbear.${INTERFACE}.pid \
+    --exec /usr/sbin/dropbear -- -B -p ${IP}:2222 -P /run/dropbear.${INTERFACE}.pid -R
+  [ $? = 0 ] && echo "OK" || echo "FAIL"
+}
+
+function stop_ssh {
+  INTERFACE=$1
+  printf "Stopping dropbear sshd on ${INTERFACE}: "
+  start-stop-daemon -K -q -p /run/dropbear.${INTERFACE}.pid
+  [ $? = 0 ] && echo "OK" || echo "FAIL"
+}
+
+# Main action handling
+case "$ACTION" in
+  add)
+  case ${INTERFACE} in
+    lo|wlusb|eth*|usb*|wlan*)
+    INTERFACE=${INTERFACE} ACTION=remove "$0"
+    INTERFACE=${INTERFACE} ACTION=change "$0"
+    ;;
+  esac
+  ;;
+  change)
+  case "${INTERFACE}" in
+    lo)
+    ip link set ${INTERFACE} up
+    ;;
+    usb0)
+    # run a dhcp and ssh server on usb ethernet devices (pi4)
+    ip link set ${INTERFACE} up
+    setup_dnsmasq ${INTERFACE} 192.199.10
+    start_ssh ${INTERFACE} 192.199.10
+    ;;
+    usb1)
+    # run a dhcp and ssh server on usb ethernet devices (pi4)
+    ip link set ${INTERFACE} up
+    setup_dnsmasq ${INTERFACE} 192.198.10
+    start_ssh ${INTERFACE} 192.198.10
+    ;;
+    eth*)
+    ip link set ${INTERFACE} up
+    # run a dhcp client on ethernet devices
+    ifplugd -i ${INTERFACE} -u1 -d3 -I -r /etc/rc.netiflink
+    ;;
+    wlusb)
+    ip link set ${INTERFACE} up
+    setup_hostapd ${INTERFACE} "pibooth-${SERIAL}-usb" "hackerspace"
+    setup_dnsmasq ${INTERFACE} 192.201.10
+    start_ssh ${INTERFACE} 192.201.10
+    ;;
+    wlan*)
+    ip link set ${INTERFACE} up
+    # check if we have a wpa_supplicant.conf file
+    # run wpa_supplicant and a dhcp client
+    if [ -f /boot/wpa_supplicant.conf ]; then
+      cp /boot/wpa_supplicant.conf /run/wpa_supplicant_${INTERFACE}.conf
+      wpa_supplicant -i ${INTERFACE} -c /run/wpa_supplicant_${INTERFACE}.conf -D nl80211,wext -B
+      ifplugd -i ${INTERFACE} -u1 -d3 -I -r /etc/rc.netiflink
+    else
+      setup_hostapd ${INTERFACE} "pibooth-${SERIAL}-int" "hackerspace"
+      setup_dnsmasq ${INTERFACE} 192.200.10
+      start_ssh ${INTERFACE} 192.200.10
+    fi
+    ;;
+  esac
+  ;;
+  remove)
+  case "${INTERFACE}" in
+    usb*)
+    stop_ssh ${INTERFACE}
+    pkill -f "dnsmasq.*${INTERFACE}"
+    if [ -e /run/dnsmasq-${INTERFACE}.conf ]; then
+      rm -f /run/dnsmasq-${INTERFACE}.conf
+    fi
+    ip addr flush "${INTERFACE}"
+    ip link set ${INTERFACE} down
+    ;;
+    wlusb)
+    stop_ssh ${INTERFACE}
+    pkill -f "dnsmasq.*${INTERFACE}"
+    if [ -e /run/dnsmasq-${INTERFACE}.conf ]; then
+      rm -f /run/dnsmasq-${INTERFACE}.conf
+    fi
+    pkill -f "hostapd.*${INTERFACE}"
+    if [ -e /run/hostapd-${INTERFACE}.conf ]; then
+      rm -f /run/hostapd-${INTERFACE}.conf
+    fi
+    ip addr flush "${INTERFACE}"
+    ip link set ${INTERFACE} down
+    ;;
+    eth*|wlan*)
+    pkill -f "udhcp.*${INTERFACE}"
+    pkill -f "ifplugd.*${INTERFACE}"
+    pkill -f "wpa_supplicant.*${INTERFACE}"
+    if [ -e /run/wpa_supplicant_${INTERFACE}.conf ]; then
+      rm -f /run/wpa_supplicant_${INTERFACE}.conf
+    fi
+    stop_ssh ${INTERFACE}
+    pkill -f "dnsmasq.*${INTERFACE}"
+    if [ -e /run/dnsmasq-${INTERFACE}.conf ]; then
+      rm -f /run/dnsmasq-${INTERFACE}.conf
+    fi
+    pkill -f "hostapd.*${INTERFACE}"
+    if [ -e /run/hostapd-${INTERFACE}.conf ]; then
+      rm -f /run/hostapd-${INTERFACE}.conf
+    fi
+    ip addr flush "${INTERFACE}"
+    ip link set ${INTERFACE} down
+    ;;
+    lo)
+    ip link set ${INTERFACE} down
+    ;;
+  esac
+  ;;
+esac

@@ -1,0 +1,2 @@
+SUBSYSTEM=="net", ENV{DEVTYPE}=="wlan", ENV{ID_BUS}=="usb", NAME="wlusb"
+SUBSYSTEM=="net", RUN+="/etc/rc.netif"

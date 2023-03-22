@@ -1,0 +1,1 @@
+SUBSYSTEM=="udc", DEVPATH=="/devices/platform/soc/fe980000.usb/udc/fe980000.usb", RUN+="/etc/rc.usbif"

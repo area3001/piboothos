@@ -1,0 +1,9 @@
+config BR2_PACKAGE_PYTHON_PYGAME_MENU
+	bool "python-pygame-menu"
+	select BR2_PACKAGE_PYTHON_PYGAME # runtime
+	select BR2_PACKAGE_PYTHON_PYPERCLIP # runtime
+	select BR2_PACKAGE_PYTHON_TYPING_EXTENSIONS # runtime
+	help
+	  A menu for pygame. Simple, and easy to use.
+
+	  https://pygame-menu.readthedocs.io

@@ -1,0 +1,10 @@
+--- a/src/common.c	2021-01-31 13:49:12.000000000 +0100
++++ b/src/common.c	2021-04-01 16:20:00.693817745 +0200
+@@ -350,7 +350,6 @@
+             ret |= 0x02;
+         if (doslabel[i] == 0x22 ||
+             (doslabel[i] >= 0x2A && doslabel[i] <= 0x2C) ||
+-            doslabel[i] == 0x2E ||
+             doslabel[i] == 0x2F ||
+             (doslabel[i] >= 0x3A && doslabel[i] <= 0x3F) ||
+             (doslabel[i] >= 0x5B && doslabel[i] <= 0x5D) ||

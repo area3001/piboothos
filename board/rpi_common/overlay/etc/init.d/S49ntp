@@ -1,0 +1,79 @@
+#!/bin/sh
+#
+# Starts Network Time Protocol daemon
+#
+
+DAEMON="ntpd"
+PIDFILE="/run/$DAEMON.pid"
+
+NTPD_ARGS=" -g"
+
+# shellcheck source=/dev/null
+[ -r "/etc/default/$DAEMON" ] && . "/etc/default/$DAEMON"
+
+ntpcheck() {
+	output=$(ntpq -c rv 2> /dev/null)
+	field=$(echo "$output" | grep -o "leap=[^,]*")
+
+	if [ "${field#*=}" -ge 0 ] && [ "${field#*=}" -le 2 ]; then
+		return 0
+	else
+		return 1
+	fi
+}
+
+ntpwait() {
+	n=$1
+	while [ "$n" -ge 0 ]; do
+		ntpcheck && break || {
+			((n--))
+			sleep 1
+		}
+	done
+}
+
+start() {
+	printf 'Starting %s: ' "$DAEMON"
+	# shellcheck disable=SC2086 # we need the word splitting
+	start-stop-daemon -S -q -p "$PIDFILE" -x "/usr/sbin/$DAEMON" \
+		-- $NTPD_ARGS -p "$PIDFILE"
+	status=$?
+	if [ "$status" -eq 0 ]; then
+		echo "OK"
+		sleep 1
+		ntpwait 10
+	else
+		echo "FAIL"
+	fi
+	return "$status"
+}
+
+stop() {
+	printf 'Stopping %s: ' "$DAEMON"
+	start-stop-daemon -K -q -p "$PIDFILE"
+	status=$?
+	if [ "$status" -eq 0 ]; then
+		rm -f "$PIDFILE"
+		echo "OK"
+	else
+		echo "FAIL"
+	fi
+	return "$status"
+}
+
+restart() {
+	stop
+	sleep 1
+	start
+}
+
+case "$1" in
+	start|stop|restart)
+		"$1";;
+	reload)
+		# Restart, since there is no true "reload" feature.
+		restart;;
+	*)
+		echo "Usage: $0 {start|stop|restart|reload}"
+		exit 1
+esac

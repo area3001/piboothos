@@ -1,0 +1,33 @@
+--- a/bindings/python/iio.py
++++ b/bindings/python/iio.py
+@@ -74,6 +74,21 @@
+         # No basestring --> Python 3
+         return isinstance(argument, str)
+ 
++def _find_libiio(name):
++	lib = find_library(name)
++	if lib is not None:
++		return _cdll(lib, use_errno = True, use_last_error = True)
++
++	libnames = ['libiio.so.0.23', 'libiio.so.0', 'libiio.so']
++	for name in libnames:
++		try:
++			lib = _cdll(name, use_errno = True, use_last_error = True)
++			return lib
++		except:
++			pass
++
++	return None
++
+ 
+ # pylint: enable=basestring-builtin
+ 
+@@ -224,7 +239,7 @@
+     # Non-windows, possibly Posix system
+     _iiolib = "iio"
+ 
+-_lib = _cdll(find_library(_iiolib), use_errno=True, use_last_error=True)
++_lib = _find_libiio(_iiolib)
+ 
+ _get_backends_count = _lib.iio_get_backends_count
+ _get_backends_count.restype = c_uint

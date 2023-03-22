@@ -1,0 +1,42 @@
+# Please note that this is only a sample, we recommend you to change it to fit
+# your needs.
+# You should override this file using a post-build script.
+# See http://buildroot.org/manual.html#rootfs-custom
+# and http://elinux.org/RPiconfig for a description of config.txt syntax
+
+kernel=u-boot.bin
+
+# To use an external initramfs file
+#initramfs rootfs.cpio.gz
+
+boot_delay=0
+disable_splash=1
+dtdebug=1
+
+# The enable_uart setting is required because U-Boot assumes the VideoCore firmware is configured
+# to use the mini UART (rather than PL011) for the serial console. Without this,
+# U-Boot will not boot at all.
+enable_uart=1
+
+# Disable overscan assuming the display supports displaying the full resolution
+# If the text shown on the screen disappears off the edge, comment this out
+disable_overscan=1
+
+# How much memory in MB to assign to the GPU on Pi models having
+# 256, 512 or 1024 MB total memory
+gpu_mem_256=100
+gpu_mem_512=100
+gpu_mem_1024=100
+
+# enable autoprobing of Bluetooth driver without need of hciattach/btattach
+dtparam=krnbt=on
+
+# enable hdmi hotplug
+hdmi_force_hotplug=1
+hdmi_drive=2
+
+# enable 64bits support
+arm_64bit=1
+
+[pi4]
+dtoverlay=dwc2,dr_mode=peripheral

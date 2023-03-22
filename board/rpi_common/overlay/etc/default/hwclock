@@ -1,0 +1,6 @@
+# use UTC
+UTC=yes
+# Can we use hwclock on this system?
+HWCLOCKACCESS=yes
+# which file to use as adjfile
+ADJFILE="/root/.adjtime"

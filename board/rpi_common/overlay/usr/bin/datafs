@@ -1,0 +1,59 @@
+#!/bin/sh
+
+. /etc/default/datafs
+
+DATDIR=/var/dat
+
+if [ -d "$DATDIR" ]; then
+  TMPDIR="$DATDIR"
+else
+  TMPDIR=/tmp/dat-$$
+  mkdir -p "$TMPDIR"
+fi
+
+# Create a new data partition if it does not exist yet
+if [ ! -b "$DATDEV" ]; then
+echo "n
+p
+
+
+
+w
+" | fdisk ${MMCDEV}
+reboot -f
+fi
+
+# Mount the data partition and create a filesystem if necessary
+if [ -b "$DATDEV" ]; then
+  e2fsck -y -f $DATDEV
+  if ! mount "$DATDEV" "$TMPDIR"; then
+    echo "[dat] mount $DATDEV failed, re-create filesystem"
+    if ! mkfs.ext4 -F $DATDEV; then
+      echo "[dat] mkfs.ext4 $DATDEV failed"
+    elif ! mount "$DATDEV" "$TMPDIR"; then
+      echo "[dat] mount new filesystem failed!"
+    fi
+  fi
+fi
+
+#
+if ! grep "^$DATDEV" /proc/mounts > /dev/null; then
+  echo "[dat] mount TMP for data"
+  mount -t tmpfs dat "$TMPDIR"
+else
+  echo "[dat] mounted $DATDEV"
+fi
+
+# sync files from the read-only filesystem to the read-write filesystem
+for DIR in /root /etc/dropbear /var/lib /var/log /var/lock; do
+  if [ ! -e "$DIR" ]; then continue; fi
+  echo "[dat] $DIR"
+  mkdir -p "${TMPDIR}${DIR}"
+  rsync -a --ignore-existing "$DIR/" "${TMPDIR}${DIR}/"
+  mount --bind "${TMPDIR}${DIR}" "$DIR"
+done
+
+if [ "$TMPDIR" != "$DATDIR" ]; then
+  umount "$TMPDIR"
+  rmdir "$TMPDIR"
+fi

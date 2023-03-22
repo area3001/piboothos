@@ -1,0 +1,16 @@
+#!/bin/sh
+
+case "$1" in
+	start)
+		mac=`cat /sys/class/net/eth0/address`
+		mac=`echo $mac | sed 's/://g'`
+		echo "Setting hostname to: pibooth-$mac"
+		hostname pibooth-$mac
+		;;
+	stop)
+		;;
+	*)
+		echo "Usage: $0 start" >&2
+		exit 1
+		;;
+esac

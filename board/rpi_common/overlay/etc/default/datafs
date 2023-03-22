@@ -1,0 +1,3 @@
+MMC=mmcblk0
+MMCDEV=/dev/${MMC}
+DATDEV=${MMCDEV}p4
