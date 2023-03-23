@@ -17,7 +17,7 @@ function make_real_dir
 }
 
 make_real_dir /etc/dropbear
-make_real_dir /etc/docker
 make_real_dir /var/log
 make_real_dir /var/lock
+make_real_dir /var/pictures
 make_real_dir /boot

@@ -45,7 +45,7 @@ else
 fi
 
 # sync files from the read-only filesystem to the read-write filesystem
-for DIR in /root /etc/dropbear /var/lib /var/log /var/lock; do
+for DIR in /root /var/pictures /etc/dropbear /var/lib /var/log /var/lock; do
   if [ ! -e "$DIR" ]; then continue; fi
   echo "[dat] $DIR"
   mkdir -p "${TMPDIR}${DIR}"
