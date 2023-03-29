@@ -63,7 +63,7 @@ done
 # assemble boot files
 BOOTFILES="rpi-firmware/config.txt rpi-firmware/overlays Image u-boot.bin boot.scr"
 if [ "${BOARD_NAME}" = "rpi4" ]; then
-    BOOTFILES+=" rpi-firmware/fixup4.dat rpi-firmware/start4.elf bcm2711-rpi-4-b.dtb"
+    BOOTFILES+=" rpi-firmware/fixup4.dat rpi-firmware/start4.elf rpi-firmware/fixup4x.dat rpi-firmware/start4x.elf bcm2711-rpi-4-b.dtb"
 fi
 
 # add wpa_supplicant.conf if data is specified

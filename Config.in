@@ -1,5 +1,6 @@
 menu "packages"
   source "$BR2_EXTERNAL_PIBOOTHOS_PATH/package/python-pibooth/Config.in"
+  source "$BR2_EXTERNAL_PIBOOTHOS_PATH/package/python-picamera/Config.in"
   source "$BR2_EXTERNAL_PIBOOTHOS_PATH/package/python-pygame-menu/Config.in"
   source "$BR2_EXTERNAL_PIBOOTHOS_PATH/package/python-pygame-vkeyboard/Config.in"
   source "$BR2_EXTERNAL_PIBOOTHOS_PATH/package/python-pyperclip/Config.in"
